@@ -1,0 +1,56 @@
+resources:
+- type: compute.v1.instance
+  name: team-two-vm 
+  properties:
+    zone: <place-your-zone-name-here>
+    machineType: https://www.googleapis.com/compute/v1/projects/<place-your-project-id-here>/zones/<place-your-zone-name-here>/machineTypes/f1-micro
+    disks:
+    - deviceName: boot
+      type: PERSISTENT
+      boot: true
+      autoDelete: true
+      initializeParams:
+        diskName: disk-<place-your-project-id-here>
+        sourceImage: https://www.googleapis.com/compute/v1/projects/debian-cloud/global/images/family/debian-9
+    networkInterfaces:
+    - network: https://www.googleapis.com/compute/v1/projects/<place-your-project-id-here>/global/networks/default
+      accessConfigs:
+      - name: External NAT
+        type: ONE_TO_ONE_NAT
+    metadata:
+      items:
+      - key: startup-script
+        value: |
+          #!/bin/bash
+          sudo apt update
+          sudo apt-get update
+          sudo apt-get install git -y
+          curl -sL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+          sudo apt install nodejs
+          sudo git clone https://github.com/EvansAF/team-two-names-api.git
+          sudo npm install
+    tags:
+      items:
+      - http
+    serviceAccounts:
+    - email: <place-your-service-account-email-here >
+      scopes:
+      - https://www.googleapis.com/auth/devstorage.read_only
+      - https://www.googleapis.com/auth/logging.write
+      - https://www.googleapis.com/auth/monitoring.write
+      - https://www.googleapis.com/auth/servicecontrol
+      - https://www.googleapis.com/auth/service.management.readonly
+      - https://www.googleapis.com/auth/trace.append
+- type: compute.v1.firewall
+  name: default-allow-http
+  properties:
+    network: https://www.googleapis.com/compute/v1/projects/<place-your-project-id-here>/global/networks/default
+    targetTags: 
+    - http
+    allowed:
+    - IPProtocol: tcp
+      ports: 
+      - '80'
+      - '8080'
+    sourceRanges: 
+    - 0.0.0.0/0
